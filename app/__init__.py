@@ -3,6 +3,8 @@ from flask import Flask
 
 from app.config import DevelopmentConfig
 from app.extensions import db, migrate
+from app.models import CloudNode
+from app.api.nodes_routes import nodes_bp
 
 
 def create_app():
@@ -18,6 +20,11 @@ def create_app():
     migrate.init_app(
         app,
         db
+    )
+
+    app.register_blueprint(
+        nodes_bp,
+        url_prefix="/api"
     )
 
 

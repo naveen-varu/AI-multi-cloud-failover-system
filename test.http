@@ -1,0 +1,15 @@
+### Create AWS Node
+
+POST http://127.0.0.1:5000/api/nodes
+Content-Type: application/json
+
+{
+    "name": "AWS Primary",
+    "provider": "AWS",
+    "region": "us-east-1"
+}
+
+
+### Get All Nodes
+
+GET http://127.0.0.1:5000/api/nodes
