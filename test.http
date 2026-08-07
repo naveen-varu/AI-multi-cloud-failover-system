@@ -13,3 +13,20 @@ Content-Type: application/json
 ### Get All Nodes
 
 GET http://127.0.0.1:5000/api/nodes
+
+### Create metrics for a specific node
+
+POST http://127.0.0.1:5000/api/metrics
+Content-Type: application/json
+
+{
+    "node_id": 1,
+    "cpu_usage": 65.0,
+    "memory_usage": 70.0,
+    "disk_usage": 45.0,
+    "response_time": 120.0
+}
+
+### Get all metrics
+
+GET http://127.0.0.1:5000/api/metrics

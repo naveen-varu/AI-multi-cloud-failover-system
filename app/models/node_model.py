@@ -44,5 +44,11 @@ class CloudNode(db.Model):
     )
 
 
+    metrics = db.relationship(
+        "HealthMetric",
+        backref="node",
+        lazy=True
+    )
+
     def __repr__(self):
         return f"<CloudNode {self.name}>"
