@@ -1,0 +1,1 @@
+# Flask extensions will be initialized on Day 2.
