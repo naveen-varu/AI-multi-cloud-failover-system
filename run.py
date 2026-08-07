@@ -1,1 +1,12 @@
 # Flask application entry point will be implemented on Day 2.
+from app import create_app
+
+
+app = create_app()
+
+
+if __name__ == "__main__":
+
+    app.run(
+        debug=True
+    )
