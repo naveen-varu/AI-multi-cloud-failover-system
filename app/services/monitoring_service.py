@@ -1,7 +1,7 @@
 from app.extensions import db
 from app.models.node_model import CloudNode
 from app.models.metric_model import HealthMetric
-
+from app.services.event_log_service import EventLogService
 
 class MonitoringService:
 
@@ -63,7 +63,24 @@ class MonitoringService:
 
         status = MonitoringService.evaluate_metric(metric)
 
+        previous_status = node.status
+
         node.status = status
+
+        if status == "FAILED":
+            EventLogService.log_event(
+                 node_id=node.id,
+                 event_type="NODE_FAILURE",
+                 reason=(
+                     f"Health check failed: "
+                     f"CPU={metric.cpu_usage}%, "
+                     f"Memory={metric.memory_usage}%, "
+                     f"Disk={metric.disk_usage}%, "
+                     f"Response={metric.response_time}ms"
+                ),
+                previous_status=previous_status,
+                new_status=status
+       )
 
         db.session.commit()
 
