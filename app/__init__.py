@@ -6,7 +6,7 @@ from app.extensions import db, migrate
 from app.models import CloudNode
 from app.api.nodes_routes import nodes_bp
 from app.api.metrics_routes import metrics_bp
-
+from app.api.health_routes import health_bp
 
 def create_app():
 
@@ -30,6 +30,12 @@ def create_app():
 
     app.register_blueprint(
         metrics_bp,
+        url_prefix="/api"
+    )
+
+
+    app.register_blueprint(
+        health_bp,
         url_prefix="/api"
     )
 

@@ -30,3 +30,60 @@ Content-Type: application/json
 ### Get all metrics
 
 GET http://127.0.0.1:5000/api/metrics
+
+
+### Get all cloud nodes
+
+GET http://127.0.0.1:5000/api/nodes
+
+
+
+### Add Health Metric
+
+POST http://127.0.0.1:5000/api/metrics
+Content-Type: application/json
+
+{
+    "node_id": 1,
+    "cpu_usage": 40,
+    "memory_usage": 50,
+    "disk_usage": 40,
+    "response_time": 100
+}
+
+
+
+### Check Node 1 Health
+
+GET http://127.0.0.1:5000/api/nodes/1/health
+
+
+### Add WARNING metric
+
+POST http://127.0.0.1:5000/api/metrics
+Content-Type: application/json
+
+{
+    "node_id": 1,
+    "cpu_usage": 80,
+    "memory_usage": 60,
+    "disk_usage": 50,
+    "response_time": 200
+}
+
+### Add FAILED metric
+
+POST http://127.0.0.1:5000/api/metrics
+Content-Type: application/json
+
+{
+    "node_id": 1,
+    "cpu_usage": 95,
+    "memory_usage": 92,
+    "disk_usage": 50,
+    "response_time": 2500
+}
+
+### Check Node 1 Health
+
+GET http://127.0.0.1:5000/api/nodes/1/health

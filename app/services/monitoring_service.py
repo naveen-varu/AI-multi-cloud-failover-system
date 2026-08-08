@@ -1,0 +1,70 @@
+from app.extensions import db
+from app.models.node_model import CloudNode
+from app.models.metric_model import HealthMetric
+
+
+class MonitoringService:
+
+    CPU_WARNING = 70
+    CPU_FAILED = 90
+
+    MEMORY_WARNING = 75
+    MEMORY_FAILED = 90
+
+    DISK_WARNING = 80
+    DISK_FAILED = 95
+
+    RESPONSE_WARNING = 500
+    RESPONSE_FAILED = 2000
+
+    @staticmethod
+    def evaluate_metric(metric):
+
+        failed = (
+            metric.cpu_usage >= MonitoringService.CPU_FAILED
+            or metric.memory_usage >= MonitoringService.MEMORY_FAILED
+            or metric.disk_usage >= MonitoringService.DISK_FAILED
+            or metric.response_time >= MonitoringService.RESPONSE_FAILED
+        )
+
+        if failed:
+            return "FAILED"
+
+        warning = (
+            metric.cpu_usage >= MonitoringService.CPU_WARNING
+            or metric.memory_usage >= MonitoringService.MEMORY_WARNING
+            or metric.disk_usage >= MonitoringService.DISK_WARNING
+            or metric.response_time >= MonitoringService.RESPONSE_WARNING
+        )
+
+        if warning:
+            return "WARNING"
+
+        return "ACTIVE"
+
+
+    @staticmethod
+    def evaluate_node(node_id):
+
+        node = CloudNode.query.get(node_id)
+
+        if node is None:
+            return None
+
+        metric = (
+            HealthMetric.query
+            .filter_by(node_id=node_id)
+            .order_by(HealthMetric.created_at.desc())
+            .first()
+        )
+
+        if metric is None:
+            return None
+
+        status = MonitoringService.evaluate_metric(metric)
+
+        node.status = status
+
+        db.session.commit()
+
+        return status
