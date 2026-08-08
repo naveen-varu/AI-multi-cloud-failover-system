@@ -19,7 +19,8 @@ def create_node():
     node = CloudNode(
         name=data["name"],
         provider=data["provider"],
-        region=data["region"]
+        region=data["region"],
+        status=data.get("status", "UNKNOWN")
     )
 
 

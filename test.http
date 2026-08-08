@@ -106,3 +106,24 @@ Content-Type: application/json
 ### Get failure events
 
 GET http://127.0.0.1:5000/api/failover/events
+
+
+### Get all nodes
+
+GET http://127.0.0.1:5000/api/nodes
+
+### Create Azure Secondary
+
+POST http://127.0.0.1:5000/api/nodes
+Content-Type: application/json
+
+{
+    "name": "Azure Secondary",
+    "provider": "Azure",
+    "region": "Central India",
+    "status": "ACTIVE"
+}
+
+### Get all nodes
+
+GET http://127.0.0.1:5000/api/nodes
