@@ -8,6 +8,7 @@ from app.api.nodes_routes import nodes_bp
 from app.api.metrics_routes import metrics_bp
 from app.api.health_routes import health_bp
 from app.api.failover_routes import failover_bp
+from app.api.config_routes import config_bp
 
 
 def create_app():
@@ -43,6 +44,11 @@ def create_app():
 
     app.register_blueprint(
         failover_bp,
+        url_prefix="/api"
+    )
+
+    app.register_blueprint(
+        config_bp,
         url_prefix="/api"
     )
 

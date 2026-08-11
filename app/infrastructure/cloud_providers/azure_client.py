@@ -6,8 +6,8 @@ from azure.mgmt.compute import ComputeManagementClient
 
 class AzureClient:
 
-    def __init__(self):
-        self.subscription_id = os.getenv(
+    def __init__(self, subscription_id=None):
+        self.subscription_id = subscription_id or os.getenv(
             "AZURE_SUBSCRIPTION_ID"
         )
 

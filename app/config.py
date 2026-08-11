@@ -18,6 +18,35 @@ class DevelopmentConfig(BaseConfig):
         "sqlite:///multicloud_ha.db"
     )
 
+    AWS_REGION = os.getenv(
+        "AWS_REGION",
+        "ap-south-1"
+    )
+
+    AWS_ACCESS_KEY_ID = os.getenv(
+        "AWS_ACCESS_KEY_ID"
+    )
+
+    AWS_SECRET_ACCESS_KEY = os.getenv(
+        "AWS_SECRET_ACCESS_KEY"
+    )
+
+    AZURE_SUBSCRIPTION_ID = os.getenv(
+        "AZURE_SUBSCRIPTION_ID"
+    )
+
+    AZURE_TENANT_ID = os.getenv(
+        "AZURE_TENANT_ID"
+    )
+
+    AZURE_CLIENT_ID = os.getenv(
+        "AZURE_CLIENT_ID"
+    )
+
+    AZURE_CLIENT_SECRET = os.getenv(
+        "AZURE_CLIENT_SECRET"
+    )
+
 
 class TestingConfig(BaseConfig):
 
@@ -32,4 +61,32 @@ class ProductionConfig(BaseConfig):
 
     SQLALCHEMY_DATABASE_URI = os.getenv(
         "DATABASE_URL"
+    )
+
+    AWS_REGION = os.getenv(
+        "AWS_REGION"
+    )
+
+    AWS_ACCESS_KEY_ID = os.getenv(
+        "AWS_ACCESS_KEY_ID"
+    )
+
+    AWS_SECRET_ACCESS_KEY = os.getenv(
+        "AWS_SECRET_ACCESS_KEY"
+    )
+
+    AZURE_SUBSCRIPTION_ID = os.getenv(
+        "AZURE_SUBSCRIPTION_ID"
+    )
+
+    AZURE_TENANT_ID = os.getenv(
+        "AZURE_TENANT_ID"
+    )
+
+    AZURE_CLIENT_ID = os.getenv(
+        "AZURE_CLIENT_ID"
+    )
+
+    AZURE_CLIENT_SECRET = os.getenv(
+        "AZURE_CLIENT_SECRET"
     )
