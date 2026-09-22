@@ -11,6 +11,10 @@ class AzureClient:
             "AZURE_SUBSCRIPTION_ID"
         )
 
+        self.resource_group = os.getenv(
+            "AZURE_RESOURCE_GROUP"
+        )
+
     def get_compute_client(self):
 
         if not self.subscription_id:

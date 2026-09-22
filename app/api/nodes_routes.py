@@ -20,7 +20,8 @@ def create_node():
         name=data["name"],
         provider=data["provider"],
         region=data["region"],
-        status=data.get("status", "UNKNOWN")
+        status=data.get("status", "UNKNOWN"),
+        instance_id=data.get("instance_id")
     )
 
 
@@ -50,7 +51,8 @@ def get_nodes():
             "name": node.name,
             "provider": node.provider,
             "region": node.region,
-            "status": node.status
+            "status": node.status,
+            "instance_id": node.instance_id,
         })
 
 

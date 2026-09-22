@@ -35,6 +35,10 @@ class DevelopmentConfig(BaseConfig):
         "AZURE_SUBSCRIPTION_ID"
     )
 
+    AZURE_RESOURCE_GROUP = os.getenv(
+        "AZURE_RESOURCE_GROUP"
+    )
+
     AZURE_TENANT_ID = os.getenv(
         "AZURE_TENANT_ID"
     )
@@ -77,6 +81,10 @@ class ProductionConfig(BaseConfig):
 
     AZURE_SUBSCRIPTION_ID = os.getenv(
         "AZURE_SUBSCRIPTION_ID"
+    )
+
+    AZURE_RESOURCE_GROUP = os.getenv(
+        "AZURE_RESOURCE_GROUP"
     )
 
     AZURE_TENANT_ID = os.getenv(
