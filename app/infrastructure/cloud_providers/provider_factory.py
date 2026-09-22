@@ -10,7 +10,7 @@ class ProviderFactory:
         provider_name = provider_name.upper()
 
         if provider_name == "AWS":
-            return AWSProvider()
+            return AWSProvider("ap-south-1")
 
         if provider_name == "AZURE":
             return AzureProvider()

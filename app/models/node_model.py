@@ -32,6 +32,12 @@ class CloudNode(db.Model):
     )
 
 
+    instance_id = db.Column(
+        db.String(100),
+        nullable=True
+    )
+
+
     status = db.Column(
         db.String(50),
         default="UNKNOWN"

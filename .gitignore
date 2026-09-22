@@ -6,3 +6,5 @@ __pycache__/
 instance/
 ml/artifacts/
 *.db
+.aws/
+*.pem
