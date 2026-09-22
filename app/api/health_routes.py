@@ -26,6 +26,7 @@ def check_node_health(node_id):
         }), 404
 
     return jsonify({
-        "node_id": node_id,
-        "status": status
-    })
+    "node_id": node_id,
+    "status": status["status"],
+    "ai_prediction": status["ai_prediction"]
+})

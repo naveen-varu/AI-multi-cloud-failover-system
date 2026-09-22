@@ -2,6 +2,7 @@ from app.extensions import db
 from app.models.node_model import CloudNode
 from app.models.metric_model import HealthMetric
 from app.services.event_log_service import EventLogService
+from app.services.ai_prediction_service import AIPredictionService
 
 class MonitoringService:
 
@@ -62,6 +63,7 @@ class MonitoringService:
             return None
 
         status = MonitoringService.evaluate_metric(metric)
+        ai_prediction = AIPredictionService.predict_metric(metric)
 
         previous_status = node.status
 
@@ -84,4 +86,7 @@ class MonitoringService:
 
         db.session.commit()
 
-        return status
+        return {
+    "status": status,
+    "ai_prediction": ai_prediction
+}
