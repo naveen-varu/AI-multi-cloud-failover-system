@@ -79,3 +79,17 @@ def get_failover_decision(node_id):
             "status": backup.status
         }
     })
+@failover_bp.route(
+    "/failover/execute/<int:node_id>",
+    methods=["POST"]
+)
+def execute_failover(node_id):
+
+    result = FailoverService.execute_failover(
+        node_id
+    )
+
+    if not result["success"]:
+        return jsonify(result), 503
+
+    return jsonify(result), 200
