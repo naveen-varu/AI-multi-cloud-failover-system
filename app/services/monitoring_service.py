@@ -3,6 +3,7 @@ from app.models.node_model import CloudNode
 from app.models.metric_model import HealthMetric
 from app.services.event_log_service import EventLogService
 from app.services.ai_prediction_service import AIPredictionService
+from app.services.failover_service import FailoverService
 
 class MonitoringService:
 
@@ -83,6 +84,8 @@ class MonitoringService:
                 previous_status=previous_status,
                 new_status=status
        )
+            
+            FailoverService.execute_failover(node.id)
 
         db.session.commit()
 
