@@ -40,6 +40,26 @@ class FailoverService:
     @staticmethod
     def execute_failover(failed_node_id):
 
+        previous_failover = (
+            FailoverEvent.query
+            .filter_by(
+                node_id=failed_node_id,
+                event_type="AUTOMATIC_FAILOVER",
+                new_status="FAILOVER_COMPLETED"
+            )
+            .order_by(FailoverEvent.id.desc())
+            .first()
+        )
+
+        if previous_failover:
+            return {
+                "success": True,
+                "failed_node_id": failed_node_id,
+                "backup_node_id": None,
+                "provider": None,
+                "message": "Failover already completed for this node"
+            }
+
         backup_node = FailoverService.select_backup_node(
             failed_node_id
         )

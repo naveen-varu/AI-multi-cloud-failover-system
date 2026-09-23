@@ -6,6 +6,8 @@ from app import create_app
 
 def test_execute_failover(monkeypatch):
 
+    app = create_app()
+
     failed_node = SimpleNamespace(
         id=1,
         provider="AWS"
@@ -40,19 +42,30 @@ def test_execute_failover(monkeypatch):
         lambda provider_name: FakeProvider()
     )
 
-    app = create_app()
     with app.app_context():
+
+        monkeypatch.setattr(
+            "app.services.failover_service.FailoverEvent.query",
+            SimpleNamespace(
+                filter_by=lambda **kwargs: SimpleNamespace(
+                    order_by=lambda *args: SimpleNamespace(
+                        first=lambda: None
+                    )
+                )
+            )
+        )
 
         result = FailoverService.execute_failover(
             failed_node.id
         )
+
     assert result["success"] is True
     assert result["failed_node_id"] == 1
     assert result["backup_node_id"] == 2
     assert result["provider"] == "Azure"
-
-
 def test_execute_failover_without_backup(monkeypatch):
+
+    app = create_app()
 
     monkeypatch.setattr(
         FailoverService,
@@ -60,10 +73,24 @@ def test_execute_failover_without_backup(monkeypatch):
         lambda failed_node_id: None
     )
 
-    result = FailoverService.execute_failover(1)
+    with app.app_context():
+
+        monkeypatch.setattr(
+            "app.services.failover_service.FailoverEvent.query",
+            SimpleNamespace(
+                filter_by=lambda **kwargs: SimpleNamespace(
+                    order_by=lambda *args: SimpleNamespace(
+                        first=lambda: None
+                    )
+                )
+            )
+        )
+
+        result = FailoverService.execute_failover(1)
 
     assert result["success"] is False
     assert result["message"] == "No healthy backup node available"
+
 
 def test_execute_failover_records_event(monkeypatch):
 
