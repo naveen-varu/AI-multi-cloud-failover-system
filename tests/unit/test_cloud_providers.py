@@ -11,11 +11,11 @@ def test_aws_provider():
     assert provider.__class__.__name__ == "AWSProvider"
 
 
-def test_azure_provider():
+def test_vyuhstack_provider():
 
-    provider = ProviderFactory.get_provider("Azure")
+    provider = ProviderFactory.get_provider("VyuhStack")
 
-    assert provider.__class__.__name__ == "AzureProvider"
+    assert provider.__class__.__name__ == "VyuhStackProvider"
 
 
 def test_unsupported_provider():
@@ -28,11 +28,13 @@ def test_unsupported_provider():
     except ValueError:
         assert True
 
+
 def test_aws_region():
 
     provider = ProviderFactory.get_provider("AWS")
 
     assert provider.client.region == "ap-south-1"
+
 
 def test_aws_health_without_instance_id():
 
@@ -47,12 +49,13 @@ def test_aws_health_without_instance_id():
 
     assert result["status"] == "UNKNOWN"
 
-def test_azure_health_without_instance_id():
 
-    provider = ProviderFactory.get_provider("Azure")
+def test_vyuhstack_health_without_instance_id():
+
+    provider = ProviderFactory.get_provider("VyuhStack")
 
     node = SimpleNamespace(
-        id=1,
+        id=2,
         instance_id=None
     )
 
@@ -60,73 +63,17 @@ def test_azure_health_without_instance_id():
 
     assert result["status"] == "UNKNOWN"
 
-def test_azure_health_running_vm(monkeypatch):
 
-    provider = ProviderFactory.get_provider("Azure")
+def test_vyuhstack_health():
 
-    class FakeStatus:
-        code = "PowerState/running"
-
-    class FakeInstanceView:
-        statuses = [FakeStatus()]
-
-    class FakeVMs:
-        def instance_view(self, resource_group_name, vm_name):
-            return FakeInstanceView()
-
-    class FakeCompute:
-        virtual_machines = FakeVMs()
-
-    def fake_get_compute_client():
-        return FakeCompute()
-
-    provider.client.resource_group = "test-resource-group"
-
-    monkeypatch.setattr(
-        provider.client,
-        "get_compute_client",
-        fake_get_compute_client
-    )
+    provider = ProviderFactory.get_provider("VyuhStack")
 
     node = SimpleNamespace(
-        id=1,
-        instance_id="test-vm"
+        id=2,
+        instance_id="vyuhstack-vm-19055",
+        status="ACTIVE"
     )
 
     result = provider.get_health(node)
 
-    assert result["status"] == "running"
-
-def test_azure_health_deallocated_vm(monkeypatch):
-
-    provider = ProviderFactory.get_provider("Azure")
-
-    class FakeStatus:
-        code = "PowerState/deallocated"
-
-    class FakeInstanceView:
-        statuses = [FakeStatus()]
-
-    class FakeVMs:
-        def instance_view(self, resource_group_name, vm_name):
-            return FakeInstanceView()
-
-    class FakeCompute:
-        virtual_machines = FakeVMs()
-
-    provider.client.resource_group = "test-resource-group"
-
-    monkeypatch.setattr(
-        provider.client,
-        "get_compute_client",
-        lambda: FakeCompute()
-    )
-
-    node = SimpleNamespace(
-        id=1,
-        instance_id="test-vm"
-    )
-
-    result = provider.get_health(node)
-
-    assert result["status"] == "deallocated"
+    assert result["status"] == "ACTIVE"

@@ -31,27 +31,6 @@ class DevelopmentConfig(BaseConfig):
         "AWS_SECRET_ACCESS_KEY"
     )
 
-    AZURE_SUBSCRIPTION_ID = os.getenv(
-        "AZURE_SUBSCRIPTION_ID"
-    )
-
-    AZURE_RESOURCE_GROUP = os.getenv(
-        "AZURE_RESOURCE_GROUP"
-    )
-
-    AZURE_TENANT_ID = os.getenv(
-        "AZURE_TENANT_ID"
-    )
-
-    AZURE_CLIENT_ID = os.getenv(
-        "AZURE_CLIENT_ID"
-    )
-
-    AZURE_CLIENT_SECRET = os.getenv(
-        "AZURE_CLIENT_SECRET"
-    )
-
-
 class TestingConfig(BaseConfig):
 
     TESTING = True
@@ -77,24 +56,4 @@ class ProductionConfig(BaseConfig):
 
     AWS_SECRET_ACCESS_KEY = os.getenv(
         "AWS_SECRET_ACCESS_KEY"
-    )
-
-    AZURE_SUBSCRIPTION_ID = os.getenv(
-        "AZURE_SUBSCRIPTION_ID"
-    )
-
-    AZURE_RESOURCE_GROUP = os.getenv(
-        "AZURE_RESOURCE_GROUP"
-    )
-
-    AZURE_TENANT_ID = os.getenv(
-        "AZURE_TENANT_ID"
-    )
-
-    AZURE_CLIENT_ID = os.getenv(
-        "AZURE_CLIENT_ID"
-    )
-
-    AZURE_CLIENT_SECRET = os.getenv(
-        "AZURE_CLIENT_SECRET"
     )

@@ -12,7 +12,7 @@ def test_execute_failover_api(monkeypatch):
             "success": True,
             "failed_node_id": node_id,
             "backup_node_id": 2,
-            "provider": "Azure",
+            "provider": "VyuhStack",
             "message": "Traffic switched successfully"
         }
 

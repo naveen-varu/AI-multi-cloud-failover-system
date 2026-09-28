@@ -15,7 +15,7 @@ def test_execute_failover(monkeypatch):
 
     backup_node = SimpleNamespace(
         id=2,
-        provider="Azure"
+        provider="VyuhStack"
     )
 
     monkeypatch.setattr(
@@ -62,7 +62,7 @@ def test_execute_failover(monkeypatch):
     assert result["success"] is True
     assert result["failed_node_id"] == 1
     assert result["backup_node_id"] == 2
-    assert result["provider"] == "Azure"
+    assert result["provider"] == "VyuhStack"
 def test_execute_failover_without_backup(monkeypatch):
 
     app = create_app()
@@ -111,7 +111,7 @@ def test_execute_failover_records_event(monkeypatch):
 
     backup_node = SimpleNamespace(
         id=2,
-        provider="Azure"
+        provider="VyuhStack"
     )
 
     monkeypatch.setattr(

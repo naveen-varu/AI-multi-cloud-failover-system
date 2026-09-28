@@ -13,12 +13,7 @@ class CloudConfigService:
                 ),
                 "region": DevelopmentConfig.AWS_REGION
             },
-            "azure": {
-                "configured": bool(
-                    DevelopmentConfig.AZURE_SUBSCRIPTION_ID
-                    and DevelopmentConfig.AZURE_TENANT_ID
-                    and DevelopmentConfig.AZURE_CLIENT_ID
-                    and DevelopmentConfig.AZURE_CLIENT_SECRET
-                )
+            "vyuhstack": {
+                "configured": True
             }
         }

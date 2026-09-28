@@ -1,5 +1,5 @@
 from app.infrastructure.cloud_providers.aws_provider import AWSProvider
-from app.infrastructure.cloud_providers.azure_provider import AzureProvider
+from app.infrastructure.cloud_providers.vyuhstack_provider import VyuhStackProvider
 
 
 class ProviderFactory:
@@ -12,8 +12,8 @@ class ProviderFactory:
         if provider_name == "AWS":
             return AWSProvider("ap-south-1")
 
-        if provider_name == "AZURE":
-            return AzureProvider()
+        if provider_name == "VYUHSTACK":
+            return VyuhStackProvider()
 
         raise ValueError(
             f"Unsupported cloud provider: {provider_name}"
