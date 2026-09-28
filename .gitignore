@@ -8,3 +8,5 @@ ml/artifacts/
 *.db
 .aws/
 *.pem
+# AWS credentials
+*accessKeys*.csv
