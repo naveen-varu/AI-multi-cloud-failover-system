@@ -9,7 +9,7 @@ from app.api.metrics_routes import metrics_bp
 from app.api.health_routes import health_bp
 from app.api.failover_routes import failover_bp
 from app.api.config_routes import config_bp
-
+from app.api.dashboard_routes import dashboard_bp
 
 def create_app():
 
@@ -52,6 +52,9 @@ def create_app():
         url_prefix="/api"
     )
 
+    app.register_blueprint(
+        dashboard_bp
+    )
 
     @app.route("/")
     def home():

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>AI Multi-Cloud Failover Dashboard</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/dashboard.css') }}"
+    >
+</head>
+
+<body>
+
+    <header class="topbar">
+        <div>
+            <h1>AI Driven Multi-Cloud Failover</h1>
+            <p>High Availability & Automatic Failover System</p>
+        </div>
+
+        <div class="system-status">
+            <span class="status-dot"></span>
+            System Online
+        </div>
+    </header>
+
+
+    <main class="dashboard">
+
+        <section class="overview-grid">
+
+            <div class="card">
+                <h2>AWS Primary</h2>
+                <p class="provider">AWS • ap-south-1</p>
+
+                <div class="status failed">
+                    FAILED
+                </div>
+            </div>
+
+
+            <div class="card">
+                <h2>VyuhStack Backup</h2>
+                <p class="provider">VyuhStack • VLAN 137</p>
+
+                <div class="status active">
+                    ACTIVE
+                </div>
+            </div>
+
+
+            <div class="card">
+                <h2>AI Prediction</h2>
+                <p class="provider">Failure Prediction Engine</p>
+
+                <div class="status failed">
+                    FAILED
+                </div>
+            </div>
+
+        </section>
+
+
+        <section class="metrics-grid">
+
+            <div class="card metric-card">
+                <h3>CPU Usage</h3>
+                <strong id="cpu">--</strong>
+                <span>%</span>
+            </div>
+
+            <div class="card metric-card">
+                <h3>Memory Usage</h3>
+                <strong id="memory">--</strong>
+                <span>%</span>
+            </div>
+
+            <div class="card metric-card">
+                <h3>Disk Usage</h3>
+                <strong id="disk">--</strong>
+                <span>%</span>
+            </div>
+
+            <div class="card metric-card">
+                <h3>Response Time</h3>
+                <strong id="response">--</strong>
+                <span>ms</span>
+            </div>
+
+        </section>
+
+
+        <section class="card failover-card">
+
+            <h2>Automatic Failover</h2>
+
+            <div class="failover-info">
+                <div>
+                    <span>Primary</span>
+                    <strong>AWS Primary</strong>
+                </div>
+
+                <div class="arrow">→</div>
+
+                <div>
+                    <span>Backup</span>
+                    <strong>VyuhStack Backup</strong>
+                </div>
+            </div>
+
+            <p class="failover-message">
+                Automatic failover completed successfully.
+            </p>
+
+        </section>
+
+
+        <section class="card">
+
+            <h2>Failover Activity</h2>
+
+            <div id="events">
+                Loading events...
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+
+</body>
+</html>
