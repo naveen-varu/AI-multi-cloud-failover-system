@@ -66,3 +66,8 @@ async function loadFailoverEvents() {
 
 loadMetrics();
 loadFailoverEvents();
+
+setInterval(() => {
+    loadMetrics();
+    loadFailoverEvents();
+}, 30000);
