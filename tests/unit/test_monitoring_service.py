@@ -10,6 +10,7 @@ def test_failed_node_triggers_failover(monkeypatch):
 
     failed_node = SimpleNamespace(
         id=1,
+        name="AWS Primary",
         status="ACTIVE"
     )
 

@@ -2,6 +2,7 @@ from app.models.node_model import CloudNode
 from app.infrastructure.cloud_providers.provider_factory import ProviderFactory
 from app.extensions import db
 from app.models.event_model import FailoverEvent
+from app.services.notification_service import send_telegram_notification
 
 
 class FailoverService:
@@ -99,6 +100,17 @@ class FailoverService:
 
             db.session.add(event)
             db.session.commit()
+
+            notification_sent = send_telegram_notification(
+                f"🔄 Automatic failover completed.\n"
+                f"Failed node: {failed_node_id}\n"
+                f"Backup node: {backup_node.name}"
+            )
+
+            print(
+                 f"Failover Telegram notification sent: "
+                 f"{notification_sent}"
+            )
 
         return {
             "success": traffic_result["success"],

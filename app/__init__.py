@@ -1,4 +1,10 @@
 # Flask application factory will be implemented on Day 2.
+
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# existing imports below...
 from flask import Flask
 
 from app.config import DevelopmentConfig

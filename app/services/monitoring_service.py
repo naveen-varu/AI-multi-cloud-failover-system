@@ -4,6 +4,7 @@ from app.models.metric_model import HealthMetric
 from app.services.event_log_service import EventLogService
 from app.services.ai_prediction_service import AIPredictionService
 from app.services.failover_service import FailoverService
+from app.services.notification_service import send_telegram_notification
 
 class MonitoringService:
 
@@ -85,7 +86,15 @@ class MonitoringService:
                   previous_status=previous_status,
                   new_status=status
                 )
-
+                 
+                 send_telegram_notification(
+                     f"🔴 {node.name} node failed.\n"
+                     f"CPU: {metric.cpu_usage}%\n"
+                     f"Memory: {metric.memory_usage}%\n"
+                     f"Disk: {metric.disk_usage}%\n"
+                     f"Response: {metric.response_time} ms"
+             )
+                 
             FailoverService.execute_failover(node.id)
 
         

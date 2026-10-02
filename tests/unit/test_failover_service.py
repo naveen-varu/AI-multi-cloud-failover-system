@@ -15,6 +15,7 @@ def test_execute_failover(monkeypatch):
 
     backup_node = SimpleNamespace(
         id=2,
+        name="Vyuhstack Backup",
         provider="VyuhStack"
     )
 
