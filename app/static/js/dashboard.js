@@ -1,6 +1,53 @@
 console.log("Dashboard JavaScript loaded");
 
 
+async function loadNodeStatus() {
+    try {
+        const response = await fetch("/api/nodes/1/health");
+        const health = await response.json();
+
+        const awsStatus = document.getElementById("aws-status");
+        const aiStatus = document.getElementById("ai-status");
+
+        awsStatus.textContent = health.status;
+        aiStatus.textContent = health.ai_prediction;
+
+        awsStatus.className =
+            "status " + health.status.toLowerCase();
+
+        aiStatus.className =
+            "status " + health.ai_prediction.toLowerCase();
+
+    } catch (error) {
+        console.error("Failed to load node status:", error);
+    }
+}
+
+
+async function loadBackupStatus() {
+    try {
+        const response = await fetch("/api/nodes");
+        const nodes = await response.json();
+
+        const backup = nodes.find(node => node.id === 2);
+
+        if (!backup) {
+            return;
+        }
+
+        const backupStatus = document.getElementById("backup-status");
+
+        backupStatus.textContent = backup.status;
+
+        backupStatus.className =
+            "status " + backup.status.toLowerCase();
+
+    } catch (error) {
+        console.error("Failed to load backup status:", error);
+    }
+}
+
+
 async function loadMetrics() {
     try {
         const response = await fetch("/api/metrics");
@@ -64,10 +111,14 @@ async function loadFailoverEvents() {
 }
 
 
+loadNodeStatus();
+loadBackupStatus();
 loadMetrics();
 loadFailoverEvents();
 
 setInterval(() => {
+    loadNodeStatus();
+    loadBackupStatus();
     loadMetrics();
     loadFailoverEvents();
 }, 30000);
