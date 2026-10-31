@@ -10,6 +10,9 @@ class BaseConfig:
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
+    GCP_PROJECT_ID = os.getenv("GCP_PROJECT_ID", "multi-cloud-failover")
+    GCP_ZONE = os.getenv("GCP_ZONE", "asia-south1-b")
+
 
 class DevelopmentConfig(BaseConfig):
 

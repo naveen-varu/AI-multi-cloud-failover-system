@@ -10,3 +10,9 @@ ml/artifacts/
 *.pem
 # AWS credentials
 *accessKeys*.csv
+
+# Local backup files
+*.backup
+*.bak
+*.save
+*.pre_safe_update

@@ -26,7 +26,6 @@
         </div>
     </header>
 
-
     <main class="dashboard">
 
         <section class="overview-grid">
@@ -34,34 +33,22 @@
             <div class="card">
                 <h2>AWS Primary</h2>
                 <p class="provider">AWS • ap-south-1</p>
-
-                <div id="aws-status" class="status">
-                    Loading...
-                </div>
+                <div id="aws-status" class="status">Loading...</div>
             </div>
-
 
             <div class="card">
-                <h2>VyuhStack Backup</h2>
-                <p class="provider">VyuhStack • VLAN 137</p>
-
-                <div id="backup-status" class="status">
-                    Loading...
-                </div>
+                <h2>GCP Backup</h2>
+                <p class="provider">Google Cloud • asia-south1-b</p>
+                <div id="backup-status" class="status">Loading...</div>
             </div>
-
 
             <div class="card">
                 <h2>AI Prediction</h2>
                 <p class="provider">Failure Prediction Engine</p>
-
-                <div id="ai-status" class="status">
-                    Loading...
-                </div>
+                <div id="ai-status" class="status">Loading...</div>
             </div>
 
         </section>
-
 
         <section class="metrics-grid">
 
@@ -91,7 +78,6 @@
 
         </section>
 
-
         <section class="card failover-card">
 
             <h2>Automatic Failover</h2>
@@ -106,29 +92,38 @@
 
                 <div>
                     <span>Backup</span>
-                    <strong>VyuhStack Backup</strong>
+                    <strong>GCP Backup</strong>
                 </div>
-            </div>
+            </div
+<div class="simulation-controls">
+    <button id="simulate-failure-btn" type="button">
+        Simulate AWS Failure
+    </button>
 
-            <p class="failover-message">
-                Automatic failover completed successfully.
-            </p>
+    <button id="reset-simulation-btn" type="button">
+        Reset Simulation
+    </button>
+</div>
+
+<p id="simulation-status" role="status">
+    Simulation inactive
+</p>>
+
+            <p class="failover-message" id="failover-decision">
+    Checking failover decision...
+</p>
 
         </section>
 
-
         <section class="card">
-
             <h2>Failover Activity</h2>
 
             <div id="events">
                 Loading events...
             </div>
-
         </section>
 
     </main>
-
 
     <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 

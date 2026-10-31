@@ -1,3 +1,5 @@
+import boto3
+
 from app.config import DevelopmentConfig
 
 
@@ -5,15 +7,17 @@ class CloudConfigService:
 
     @staticmethod
     def get_status():
+        credentials_available = bool(
+            boto3.Session().get_credentials()
+        )
+
         return {
             "aws": {
-                "configured": bool(
-                    DevelopmentConfig.AWS_ACCESS_KEY_ID
-                    and DevelopmentConfig.AWS_SECRET_ACCESS_KEY
-                ),
+                "configured": credentials_available,
                 "region": DevelopmentConfig.AWS_REGION
             },
-            "vyuhstack": {
-                "configured": True
+            "gcp": {
+                "configured": True,
+                "project": DevelopmentConfig.GCP_PROJECT_ID
             }
         }

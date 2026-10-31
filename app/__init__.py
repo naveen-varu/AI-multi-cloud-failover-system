@@ -17,13 +17,11 @@ from app.api.failover_routes import failover_bp
 from app.api.config_routes import config_bp
 from app.api.dashboard_routes import dashboard_bp
 
-def create_app():
+def create_app(config_class=DevelopmentConfig):
 
     app = Flask(__name__)
 
-    app.config.from_object(
-        DevelopmentConfig
-    )
+    app.config.from_object(config_class)
 
     db.init_app(app)
 

@@ -1,124 +1,190 @@
-console.log("Dashboard JavaScript loaded");
+console.log("Multi-Cloud Dashboard Loaded");
+let simulationActive = false;
+async function loadCloudStatus(nodeId, elementId, provider) {
+    const element = document.getElementById(elementId);
 
-
-async function loadNodeStatus() {
     try {
-        const response = await fetch("/api/nodes/1/health");
-        const health = await response.json();
+        const response = await fetch(`/api/nodes/${nodeId}/health`);
 
-        const awsStatus = document.getElementById("aws-status");
-        const aiStatus = document.getElementById("ai-status");
-
-        awsStatus.textContent = health.status;
-        aiStatus.textContent = health.ai_prediction;
-
-        awsStatus.className =
-            "status " + health.status.toLowerCase();
-
-        aiStatus.className =
-            "status " + health.ai_prediction.toLowerCase();
-
-    } catch (error) {
-        console.error("Failed to load node status:", error);
-    }
-}
-
-
-async function loadBackupStatus() {
-    try {
-        const response = await fetch("/api/nodes");
-        const nodes = await response.json();
-
-        const backup = nodes.find(node => node.id === 2);
-
-        if (!backup) {
-            return;
+        if (!response.ok) {
+            throw new Error(`Health API returned ${response.status}`);
         }
 
-        const backupStatus = document.getElementById("backup-status");
+        const health = await response.json();
 
-        backupStatus.textContent = backup.status;
+        element.textContent = health.status;
+        element.className = "status " + health.status.toLowerCase();
 
-        backupStatus.className =
-            "status " + backup.status.toLowerCase();
+        return health;
 
     } catch (error) {
-        console.error("Failed to load backup status:", error);
+        console.error(`${provider} health check failed:`, error);
+        element.textContent = "Health unavailable";
+        element.className = "status unknown";
+        return null;
     }
 }
 
+async function loadCloudStatuses() {
+    const aws = await loadCloudStatus(2, "aws-status", "AWS");
+    const gcp = await loadCloudStatus(1, "backup-status", "GCP");
+
+    return { aws, gcp };
+}
+
+async function loadAIPrediction() {
+    const element = document.getElementById("ai-status");
+
+    try {
+        const response = await fetch("/api/nodes/1/health");
+
+        if (!response.ok) {
+            throw new Error("AI prediction unavailable");
+        }
+
+        const data = await response.json();
+
+        element.textContent = data.ai_prediction || "Unavailable";
+        element.className =
+            "status " + (data.ai_prediction || "unknown").toLowerCase();
+
+    } catch (error) {
+        element.textContent = "Unavailable";
+        element.className = "status unknown";
+        console.error("AI prediction error:", error);
+    }
+}
 
 async function loadMetrics() {
     try {
         const response = await fetch("/api/metrics");
-        const metrics = await response.json();
 
-        if (!metrics.length) {
-            return;
+        if (!response.ok) {
+            throw new Error("Metrics API unavailable");
         }
 
-        const latest = metrics[metrics.length - 1];
+        const metrics = await response.json();
+
+        if (!metrics.length) return;
+
+        // Display the latest metric from GCP node ID 1.
+        const gcpMetrics = metrics.filter(metric => metric.node_id === 1);
+
+        if (!gcpMetrics.length) return;
+
+        const latest = gcpMetrics[gcpMetrics.length - 1];
 
         document.getElementById("cpu").textContent = latest.cpu;
         document.getElementById("memory").textContent = latest.memory;
         document.getElementById("disk").textContent = latest.disk;
-        document.getElementById("response").textContent = latest.response_time;
+        document.getElementById("response").textContent =
+            latest.response_time;
 
     } catch (error) {
-        console.error("Failed to load metrics:", error);
+        console.error("Metrics loading failed:", error);
     }
 }
-
 
 async function loadFailoverEvents() {
     try {
         const response = await fetch("/api/failover/events");
-        const events = await response.json();
 
+        if (!response.ok) {
+            throw new Error("Failover events unavailable");
+        }
+
+        const events = await response.json();
         const container = document.getElementById("events");
 
         if (!events.length) {
-            container.innerHTML = "<p>No failover events recorded.</p>";
+            container.textContent = "No failover events recorded.";
             return;
         }
 
         container.innerHTML = "";
 
         events.slice(0, 10).forEach(event => {
-
             const eventCard = document.createElement("div");
             eventCard.className = "event";
 
-            eventCard.innerHTML = `
-                <div class="event-header">
-                    <strong>${event.event_type}</strong>
-                    <span>${event.new_status}</span>
-                </div>
+            const heading = document.createElement("strong");
+            heading.textContent = event.event_type;
 
-                <p>${event.reason}</p>
+            const status = document.createElement("span");
+            status.textContent = event.new_status;
 
-                <small>
-                    ${event.previous_status} → ${event.new_status}
-                </small>
-            `;
+            const reason = document.createElement("p");
+            reason.textContent = event.reason;
 
+            const transition = document.createElement("small");
+            transition.textContent =
+                `${event.previous_status} → ${event.new_status}`;
+
+            eventCard.append(heading, status, reason, transition);
             container.appendChild(eventCard);
         });
 
     } catch (error) {
-        console.error("Failed to load failover events:", error);
+        console.error("Failover events loading failed:", error);
     }
 }
 
+async function refreshDashboard() {
+    await loadCloudStatuses();
+    await loadAIPrediction();
+    await loadMetrics();
+    await loadFailoverEvents();
+    await loadFailoverDecision();
+}
 
-loadNodeStatus();
-loadBackupStatus();
-loadMetrics();
-loadFailoverEvents();
+refreshDashboard();
 
-setInterval(() => {
-    loadNodeStatus();
-    loadBackupStatus();
-    loadMetrics();
-    loadFailoverEvents();
-}, 30000);
+setInterval(refreshDashboard, 30000);
+async function loadFailoverDecision() {
+    const element = document.getElementById("failover-decision");
+
+    try {
+        const simulationQuery = simulationActive ? "?simulate_failure=true" : "";
+const response = await fetch(`/api/failover/decision/2${simulationQuery}`);
+        if (!response.ok) {
+            throw new Error("Failover decision API unavailable");
+        }
+
+        const data = await response.json();
+
+        if (data.decision === "NO_FAILOVER_REQUIRED") {
+            element.textContent =
+                "AWS Primary → GCP Backup | Primary healthy. No failover required.";
+        } else if (data.decision === "FAILOVER_REQUIRED") {
+            element.textContent =
+                "AWS Primary → GCP Backup | Failover required. Backup: " +
+                data.backup_node.name;
+        } else {
+            element.textContent = "Failover decision: " + data.decision;
+        }
+
+    } catch (error) {
+        console.error("Failover decision error:", error);
+        element.textContent = "Unable to retrieve failover decision.";
+    }
+}
+
+document.getElementById("simulate-failure-btn").addEventListener("click", async () => {
+    simulationActive = true;
+
+    document.getElementById("simulation-status").textContent =
+        "AWS failure simulation is active (no real resources changed).";
+document.getElementById("simulation-status").style.background = "#7f1d1d";
+document.getElementById("simulation-status").style.color = "#fca5a5";
+    await loadFailoverDecision();
+});
+
+document.getElementById("reset-simulation-btn").addEventListener("click", async () => {
+    simulationActive = false;
+
+    document.getElementById("simulation-status").textContent =
+        "Simulation inactive. Live cloud status restored.";
+document.getElementById("simulation-status").style.background = "#14532d";
+document.getElementById("simulation-status").style.color = "#4ade80";
+    await loadFailoverDecision();
+});
