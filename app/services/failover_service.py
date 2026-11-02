@@ -1,5 +1,6 @@
 from app.models.node_model import CloudNode
 from app.infrastructure.cloud_providers.provider_factory import ProviderFactory
+from app.infrastructure.cloud_providers.aws_provider import AWSProvider
 from app.extensions import db
 from app.models.event_model import FailoverEvent
 from app.services.notification_service import send_telegram_notification
@@ -14,6 +15,7 @@ class FailoverService:
             CloudNode.query
             .filter(
                 CloudNode.id != failed_node_id,
+                CloudNode.provider == "GCP",
                 CloudNode.status == "ACTIVE"
             )
             .all()
@@ -23,36 +25,21 @@ class FailoverService:
 
         for node in nodes:
             try:
-                provider = ProviderFactory.get_provider(node.provider)
+                provider = ProviderFactory.get_provider("GCP")
                 health = provider.get_health(node)
 
                 cloud_status = str(
                     health.get("status", "UNKNOWN")
                 ).upper()
 
-                if cloud_status in ("STOPPED", "TERMINATED"):
+                endpoint_healthy = health.get("endpoint_healthy") is True
+
+                if cloud_status == "RUNNING" and endpoint_healthy:
                     healthy_nodes.append(node)
-                    continue
-
-                if cloud_status != "RUNNING":
-                    continue
-
-                if node.provider.upper() == "AWS":
-                    system_status = str(
-                        health.get("system_status", "UNKNOWN")
-                    ).lower()
-                    instance_status = str(
-                        health.get("instance_status", "UNKNOWN")
-                    ).lower()
-
-                    if system_status != "ok" or instance_status != "ok":
-                        continue
-
-                healthy_nodes.append(node)
 
             except Exception as error:
                 print(
-                    f"Live health check failed for node {node.id}: {error}"
+                    f"GCP backup health check failed for node {node.id}: {error}"
                 )
 
         return healthy_nodes
@@ -76,30 +63,18 @@ class FailoverService:
 
     @staticmethod
     def execute_failover(failed_node_id):
-        import time
 
         failed_node = db.session.get(CloudNode, failed_node_id)
         if failed_node is None:
             return {"success": False, "message": "Failed node not found"}
 
-        previous_failover = (
-            FailoverEvent.query
-            .filter_by(
-                node_id=failed_node_id,
-                event_type="AUTOMATIC_FAILOVER",
-                new_status="FAILOVER_COMPLETED"
-            )
-            .order_by(FailoverEvent.id.desc())
-            .first()
-        )
-
-        if previous_failover:
+        if (
+            failed_node.provider != "AWS"
+            or failed_node.instance_id != AWSProvider.PRIMARY_INSTANCE_ID
+        ):
             return {
-                "success": True,
-                "failed_node_id": failed_node_id,
-                "backup_node_id": None,
-                "provider": None,
-                "message": "Failover already completed for this node"
+                "success": False,
+                "message": "Failover is restricted to the configured AWS primary node"
             }
 
         backup_node = FailoverService.select_backup_node(failed_node_id)
@@ -114,57 +89,22 @@ class FailoverService:
 
         def is_healthy(health):
             status = str(health.get("status", "UNKNOWN")).upper()
-            if status != "RUNNING":
-                return False
+            endpoint_healthy = health.get("endpoint_healthy") is True
 
-            if backup_node.provider.upper() == "AWS":
-                return (
-                    str(health.get("system_status", "")).lower() == "ok"
-                    and str(health.get("instance_status", "")).lower() == "ok"
-                )
-
-            return True
+            return status == "RUNNING" and endpoint_healthy
 
         try:
             health = provider.get_health(backup_node)
-            cloud_status = str(health.get("status", "UNKNOWN")).upper()
-
             if not is_healthy(health):
-                if cloud_status not in ("STOPPED", "TERMINATED"):
-                    return {
-                        "success": False,
-                        "backup_node_id": backup_node.id,
-                        "message": (
-                            "Backup node is not healthy or is in a transitional "
-                            "state. No start or traffic-switch action was taken."
-                        ),
-                        "cloud_health": health
-                    }
-
-                start_result = provider.start_node(backup_node)
-                if not start_result.get("success"):
-                    return {
-                        "success": False,
-                        "backup_node_id": backup_node.id,
-                        "message": "Failed to start backup node",
-                        "details": start_result
-                    }
-
-                ready = False
-                for _ in range(12):
-                    time.sleep(5)
-                    health = provider.get_health(backup_node)
-                    if is_healthy(health):
-                        ready = True
-                        break
-
-                if not ready:
-                    return {
-                        "success": False,
-                        "backup_node_id": backup_node.id,
-                        "message": "Backup node did not become healthy within 60 seconds",
-                        "cloud_health": health
-                    }
+                return {
+                    "success": False,
+                    "backup_node_id": backup_node.id,
+                    "message": (
+                        "GCP backup is not running and application-healthy. "
+                        "No instance start or traffic-switch action was taken."
+                    ),
+                    "cloud_health": health
+                }
 
             traffic_result = provider.switch_traffic(backup_node)
             traffic_success = bool(traffic_result.get("success"))
@@ -184,23 +124,46 @@ class FailoverService:
                     else "FAILOVER_INCOMPLETE"
                 )
             )
-            db.session.add(event)
-            db.session.commit()
+            event_logged = True
+            event_log_error = None
+
+            try:
+                db.session.add(event)
+                db.session.commit()
+            except Exception as logging_error:
+                db.session.rollback()
+                event_logged = False
+                event_log_error = str(logging_error)
+                print(
+                    f"Traffic result: {traffic_success}. "
+                    f"Failover event could not be recorded: {logging_error}"
+                )
 
             if traffic_success:
-                notification_sent = send_telegram_notification(
-                    f"Automatic failover completed.\n"
-                    f"Failed node: {failed_node_id}\n"
-                    f"Backup node: {backup_node.name}"
-                )
-                print(f"Failover Telegram notification sent: {notification_sent}")
+                try:
+                    notification_sent = send_telegram_notification(
+                        f"Automatic failover completed.\n"
+                        f"Failed node: {failed_node_id}\n"
+                        f"Backup node: {backup_node.name}"
+                    )
+                    print(
+                        f"Failover Telegram notification sent: {notification_sent}"
+                    )
+                except Exception as notification_error:
+                    print(
+                        f"Failover succeeded, but Telegram notification failed: "
+                        f"{notification_error}"
+                    )
 
             return {
                 "success": traffic_success,
                 "failed_node_id": failed_node_id,
                 "backup_node_id": backup_node.id,
                 "provider": backup_node.provider,
-                "message": traffic_result.get("message", "No routing message returned")
+                "message": traffic_result.get("message", "No routing message returned"),
+                "traffic_result": traffic_result,
+                "event_logged": event_logged,
+                "event_log_error": event_log_error
             }
 
         except Exception as error:

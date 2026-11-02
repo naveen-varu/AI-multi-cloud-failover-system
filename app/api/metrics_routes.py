@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 
 from app.extensions import db
 from app.models.metric_model import HealthMetric
-
+from app.services.monitoring_service import MonitoringService
 
 metrics_bp = Blueprint(
     "metrics",
@@ -32,13 +32,14 @@ def create_metric():
 
 
     db.session.add(metric)
-
     db.session.commit()
 
+    monitoring_result = MonitoringService.evaluate_node(metric.node_id)
 
     return jsonify({
         "message": "Health metric stored",
-        "id": metric.id
+        "id": metric.id,
+        "monitoring": monitoring_result
     })
 
 
@@ -46,7 +47,10 @@ def create_metric():
 @metrics_bp.route("/metrics", methods=["GET"])
 def get_metrics():
 
-    metrics = HealthMetric.query.all()
+    metrics = HealthMetric.query.order_by(
+        HealthMetric.created_at.asc(),
+        HealthMetric.id.asc()
+    ).all()
 
 
     result = []

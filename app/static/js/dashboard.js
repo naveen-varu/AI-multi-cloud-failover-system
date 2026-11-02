@@ -87,7 +87,7 @@ async function loadMetrics() {
 
 async function loadFailoverEvents() {
     try {
-        const response = await fetch("/api/failover/events");
+        const response = await fetch("/dashboard/events");
 
         if (!response.ok) {
             throw new Error("Failover events unavailable");

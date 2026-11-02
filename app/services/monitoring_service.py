@@ -1,3 +1,4 @@
+from flask import current_app
 from app.extensions import db
 from app.models.node_model import CloudNode
 from app.models.metric_model import HealthMetric
@@ -48,7 +49,6 @@ class MonitoringService:
 
     @staticmethod
     def evaluate_node(node_id):
-
         node = CloudNode.query.get(node_id)
 
         if node is None:
@@ -66,41 +66,53 @@ class MonitoringService:
 
         status = MonitoringService.evaluate_metric(metric)
         ai_prediction = AIPredictionService.predict_metric(metric)
-
         previous_status = node.status
-
         node.status = status
 
-        if status == "FAILED":
-            if previous_status != "FAILED":
-                 EventLogService.log_event(
-                     node_id=node.id,
-                     event_type="NODE_FAILURE",
-                     reason=(
-                         f"Health check failed: "
-                         f"CPU={metric.cpu_usage}%, "
-                         f"Memory={metric.memory_usage}%, "
-                         f"Disk={metric.disk_usage}%, "
-                         f"Response={metric.response_time}ms"
-                  ),
-                  previous_status=previous_status,
-                  new_status=status
-                )
-                 
-                 send_telegram_notification(
-                     f"🔴 {node.name} node failed.\n"
-                     f"CPU: {metric.cpu_usage}%\n"
-                     f"Memory: {metric.memory_usage}%\n"
-                     f"Disk: {metric.disk_usage}%\n"
-                     f"Response: {metric.response_time} ms"
-             )
-                 
-            FailoverService.execute_failover(node.id)
+        failover_result = None
+        notification_error = None
 
-        
+        if status == "FAILED" and previous_status != "FAILED":
+            EventLogService.log_event(
+                node_id=node.id,
+                event_type="NODE_FAILURE",
+                reason=(
+                    f"Health check failed: "
+                    f"CPU={metric.cpu_usage}%, "
+                    f"Memory={metric.memory_usage}%, "
+                    f"Disk={metric.disk_usage}%, "
+                    f"Response={metric.response_time}ms"
+                ),
+                previous_status=previous_status,
+                new_status=status
+            )
+
+            try:
+                send_telegram_notification(
+                    f"🔴 {node.name} node failed.\\n"
+                    f"CPU: {metric.cpu_usage}%\\n"
+                    f"Memory: {metric.memory_usage}%\\n"
+                    f"Disk: {metric.disk_usage}%\\n"
+                    f"Response: {metric.response_time} ms"
+                )
+            except Exception as exc:
+                notification_error = str(exc)
+                current_app.logger.exception(
+                    "Failure notification raised an unexpected error"
+                )
+
+            if (
+                node.provider.upper() == "AWS"
+                and node.instance_id == "i-01a4f91dd0308e2c6"
+                and current_app.config.get("AUTO_FAILOVER_ENABLED", False)
+            ):
+                failover_result = FailoverService.execute_failover(node.id)
+
         db.session.commit()
 
         return {
-    "status": status,
-    "ai_prediction": ai_prediction
-}
+            "status": status,
+            "ai_prediction": ai_prediction,
+            "failover_result": failover_result,
+            "notification_error": notification_error
+        }

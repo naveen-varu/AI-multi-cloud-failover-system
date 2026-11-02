@@ -7,10 +7,13 @@ from app.services.monitoring_service import MonitoringService
 def test_failed_node_triggers_failover(monkeypatch):
 
     app = create_app()
+    app.config["AUTO_FAILOVER_ENABLED"] = True
 
     failed_node = SimpleNamespace(
         id=1,
         name="AWS Primary",
+        provider="AWS",
+        instance_id="i-01a4f91dd0308e2c6",
         status="ACTIVE"
     )
 

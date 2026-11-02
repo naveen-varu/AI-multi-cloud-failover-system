@@ -16,3 +16,7 @@ ml/artifacts/
 *.bak
 *.save
 *.pre_safe_update
+
+# Temporary safety copies created during development
+*.before-*
+*.before_*

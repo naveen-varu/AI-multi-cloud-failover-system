@@ -1,4 +1,4 @@
-# Application configuration will be implemented on Day 2.
+# Application configuration will be implemented on day 2.
 import os
 
 
@@ -7,6 +7,9 @@ class BaseConfig:
         "SECRET_KEY",
         "development-secret-key"
     )
+    AUTO_FAILOVER_ENABLED = os.getenv(
+        "AUTO_FAILOVER_ENABLED", "false"
+    ).lower() == "true"
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 

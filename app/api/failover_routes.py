@@ -1,5 +1,6 @@
-from flask import Blueprint, jsonify
-
+import hmac
+import os
+from flask import Blueprint, jsonify, request
 from app.models.node_model import CloudNode
 from app.models.event_model import FailoverEvent
 from app.services.failover_service import FailoverService
@@ -11,6 +12,17 @@ failover_bp = Blueprint("failover", __name__)
 
 @failover_bp.route("/failover/events", methods=["GET"])
 def get_failover_events():
+
+    expected_key = os.getenv("FAILOVER_API_KEY")
+    provided_key = request.headers.get("X-API-Key", "")
+
+    if not expected_key or not hmac.compare_digest(
+        provided_key, expected_key
+    ):
+        return jsonify({
+            "success": False,
+            "message": "Unauthorized"
+        }), 401
 
     events = (
         FailoverEvent.query
@@ -129,6 +141,17 @@ def get_failover_decision(node_id):
 
 @failover_bp.route("/failover/execute/<int:node_id>", methods=["POST"])
 def execute_failover(node_id):
+
+    expected_key = os.getenv("FAILOVER_API_KEY")
+    provided_key = request.headers.get("X-API-Key", "")
+
+    if not expected_key or not hmac.compare_digest(
+        provided_key, expected_key
+    ):
+        return jsonify({
+            "success": False,
+            "message": "Unauthorized"
+        }), 401
 
     result = FailoverService.execute_failover(node_id)
 
