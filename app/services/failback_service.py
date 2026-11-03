@@ -1,5 +1,6 @@
 import subprocess
 import requests
+import time
 
 from app.extensions import db
 from app.models.node_model import CloudNode
@@ -18,24 +19,30 @@ class FailbackService:
 
     @staticmethod
     def verify_route(expected_backend):
-        try:
-            response = requests.get(
-                FailbackService.PROXY_URL,
-                timeout=5
-            )
+        for attempt in range(10):
+            try:
+                response = requests.get(
+                    FailbackService.PROXY_URL,
+                    timeout=5,
+                    headers={"Connection": "close"}
+                )
 
-            active_backend = response.headers.get(
-                "X-Active-Backend", ""
-            )
+                active_backend = response.headers.get(
+                    "X-Active-Backend", ""
+                )
 
-            return (
-                response.status_code == 200
-                and active_backend == expected_backend
-            )
+                if (
+                    response.status_code == 200
+                    and active_backend == expected_backend
+                ):
+                    return True
 
-        except requests.RequestException:
-            return False
+            except requests.RequestException:
+                pass
 
+            time.sleep(1)
+
+        return False
     @staticmethod
     def rollback_to_gcp():
         try:

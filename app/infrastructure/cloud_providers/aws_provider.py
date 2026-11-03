@@ -1,5 +1,6 @@
 import subprocess
 import requests
+import time
 
 from app.domain.interfaces.i_cloud_provider import ICloudProvider
 from app.infrastructure.cloud_providers.aws_client import AWSClient
@@ -120,26 +121,44 @@ class AWSProvider(ICloudProvider):
                 timeout=30
             )
 
-            response = requests.get(proxy_url, timeout=5)
-            active_backend = response.headers.get(
-                "X-Active-Backend", ""
-            )
+            # Retry route verification after Nginx reload.
+            active_backend = ""
+            last_status = None
 
-            if (
-                response.status_code == 200
-                and active_backend == expected_backend
-            ):
-                return {
-                    "success": True,
-                    "message": "AWS primary traffic switch verified",
-                    "active_backend": active_backend,
-                    "output": result.stdout.strip()
-                }
+            for attempt in range(10):
+                try:
+                    response = requests.get(
+                        proxy_url,
+                        timeout=5,
+                        headers={"Connection": "close"}
+                    )
+
+                    last_status = response.status_code
+                    active_backend = response.headers.get(
+                        "X-Active-Backend", ""
+                    )
+
+                    if (
+                        response.status_code == 200
+                        and active_backend == expected_backend
+                    ):
+                        return {
+                            "success": True,
+                            "message": "AWS primary traffic switch verified",
+                            "active_backend": active_backend,
+                            "attempts": attempt + 1,
+                            "output": result.stdout.strip()
+                        }
+
+                except requests.RequestException:
+                    pass
+
+                time.sleep(1)
 
             return {
                 "success": False,
-                "message": "AWS switching command completed, but route verification failed",
-                "http_status": response.status_code,
+                "message": "AWS route verification failed after 10 attempts",
+                "http_status": last_status,
                 "active_backend": active_backend
             }
 
