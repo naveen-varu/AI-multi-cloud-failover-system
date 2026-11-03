@@ -5,6 +5,7 @@ from app.models.metric_model import HealthMetric
 from app.services.event_log_service import EventLogService
 from app.services.ai_prediction_service import AIPredictionService
 from app.services.failover_service import FailoverService
+from app.services.failback_service import FailbackService
 from app.services.notification_service import send_telegram_notification
 
 class MonitoringService:
@@ -70,6 +71,7 @@ class MonitoringService:
         node.status = status
 
         failover_result = None
+        failback_result = None
         notification_error = None
 
         if status == "FAILED" and previous_status != "FAILED":
@@ -108,11 +110,21 @@ class MonitoringService:
             ):
                 failover_result = FailoverService.execute_failover(node.id)
 
+        # Attempt failback whenever AWS metrics are healthy.
+        # FailbackService independently verifies both cloud nodes and the active route.
+        if (
+            status == "ACTIVE"
+            and node.provider.upper() == "AWS"
+            and current_app.config.get("AUTO_FAILBACK_ENABLED", False)
+        ):
+            failback_result = FailbackService.execute_failback()
+
         db.session.commit()
 
         return {
             "status": status,
             "ai_prediction": ai_prediction,
             "failover_result": failover_result,
+            "failback_result": failback_result,
             "notification_error": notification_error
         }

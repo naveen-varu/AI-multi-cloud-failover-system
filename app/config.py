@@ -10,6 +10,9 @@ class BaseConfig:
     AUTO_FAILOVER_ENABLED = os.getenv(
         "AUTO_FAILOVER_ENABLED", "false"
     ).lower() == "true"
+    AUTO_FAILBACK_ENABLED = os.getenv(
+        "AUTO_FAILBACK_ENABLED", "false"
+    ).lower() == "true"
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 

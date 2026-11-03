@@ -4,6 +4,7 @@ from flask import Blueprint, jsonify, request
 from app.models.node_model import CloudNode
 from app.models.event_model import FailoverEvent
 from app.services.failover_service import FailoverService
+from app.services.failback_service import FailbackService
 from app.infrastructure.cloud_providers.provider_factory import ProviderFactory
 
 
@@ -156,6 +157,27 @@ def execute_failover(node_id):
     result = FailoverService.execute_failover(node_id)
 
     if not result["success"]:
+        return jsonify(result), 503
+
+    return jsonify(result), 200
+
+@failover_bp.route("/failover/execute-failback", methods=["POST"])
+def execute_failback():
+
+    expected_key = os.getenv("FAILOVER_API_KEY")
+    provided_key = request.headers.get("X-API-Key", "")
+
+    if not expected_key or not hmac.compare_digest(
+        provided_key, expected_key
+    ):
+        return jsonify({
+            "success": False,
+            "message": "Unauthorized"
+        }), 401
+
+    result = FailbackService.execute_failback()
+
+    if not result.get("success"):
         return jsonify(result), 503
 
     return jsonify(result), 200

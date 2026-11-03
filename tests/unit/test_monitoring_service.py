@@ -74,3 +74,24 @@ def test_failed_node_triggers_failover(monkeypatch):
 
     assert result["status"] == "FAILED"
     assert failover_called["value"] is True
+
+def test_healthy_aws_triggers_failback(monkeypatch):
+    app = create_app()
+    app.config["AUTO_FAILBACK_ENABLED"] = True
+    node = SimpleNamespace(id=2, name="AWS", provider="AWS", instance_id="i-01a4f91dd0308e2c6", status="FAILED")
+    metric = SimpleNamespace(cpu_usage=20, memory_usage=30, disk_usage=25, response_time=100)
+    class Query:
+        def filter_by(self, **kwargs): return self
+        def order_by(self, *args): return self
+        def first(self): return metric
+    called = {"value": False}
+    with app.app_context():
+        monkeypatch.setattr("app.services.monitoring_service.CloudNode.query", SimpleNamespace(get=lambda node_id: node))
+        monkeypatch.setattr("app.services.monitoring_service.HealthMetric.query", Query())
+        monkeypatch.setattr("app.services.monitoring_service.AIPredictionService.predict_metric", lambda metric: "ACTIVE")
+        monkeypatch.setattr("app.services.monitoring_service.db.session.commit", lambda: None)
+        monkeypatch.setattr("app.services.monitoring_service.FailbackService.execute_failback", lambda: called.update(value=True) or {"success": True})
+        result = MonitoringService.evaluate_node(2)
+    assert result["status"] == "ACTIVE"
+    assert called["value"] is True
+    assert result["failback_result"]["success"] is True
