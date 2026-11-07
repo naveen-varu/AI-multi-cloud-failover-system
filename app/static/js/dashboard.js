@@ -67,12 +67,29 @@ async function loadMetrics() {
 
         if (!metrics.length) return;
 
-        // Display the latest metric from GCP node ID 1.
-        const gcpMetrics = metrics.filter(metric => metric.node_id === 1);
+        const backendResponse = await fetch("/", { method: "HEAD" });
+        const activeBackend = backendResponse.headers.get("X-Active-Backend");
 
-        if (!gcpMetrics.length) return;
+        let activeNodeId = null;
 
-        const latest = gcpMetrics[gcpMetrics.length - 1];
+        if (activeBackend === "3.110.224.29:80") {
+            activeNodeId = 2;
+        } else if (activeBackend === "127.0.0.1:5000") {
+            activeNodeId = 1;
+        }
+
+        if (activeNodeId === null) {
+            console.error("Unable to identify active backend:", activeBackend);
+            return;
+        }
+
+        const activeMetrics = metrics.filter(
+            metric => metric.node_id === activeNodeId
+        );
+
+        if (!activeMetrics.length) return;
+
+        const latest = activeMetrics[activeMetrics.length - 1];
 
         document.getElementById("cpu").textContent = latest.cpu;
         document.getElementById("memory").textContent = latest.memory;
