@@ -137,10 +137,9 @@ class GCPProvider(ICloudProvider):
                 "X-Active-Backend", ""
             )
 
-            if (
-                response.status_code != 200
-                or current_backend != aws_backend
-            ):
+            # Verify the configured AWS upstream even if its application
+            # temporarily returns an error during failure detection.
+            if current_backend != aws_backend:
                 return {
                     "success": False,
                     "message": "AWS primary route could not be verified. No traffic change attempted.",

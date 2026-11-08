@@ -162,7 +162,60 @@ def test_gcp_switch_traffic_successfully_verifies_route(monkeypatch):
     assert result["active_backend"] == "127.0.0.1:5001"
 
 
-def test_gcp_switch_rejects_non_200_aws_route(monkeypatch):
+def test_gcp_switch_allows_aws_route_with_non_200_response(monkeypatch):
+    provider = ProviderFactory.get_provider("GCP")
+    node = SimpleNamespace(
+        id=1,
+        provider="GCP",
+        instance_id="gcp-backup-node"
+    )
+
+    aws_response = SimpleNamespace(
+        status_code=503,
+        headers={"X-Active-Backend": "3.110.224.29:5001"}
+    )
+
+    rollback_response = SimpleNamespace(
+        status_code=200,
+        headers={"X-Active-Backend": "3.110.224.29:5001"}
+    )
+
+    responses = iter(
+        [aws_response] + [aws_response] * 5 + [rollback_response]
+    )
+
+    monkeypatch.setattr(
+        "app.infrastructure.cloud_providers.gcp_provider.requests.get",
+        lambda *args, **kwargs: next(responses)
+    )
+
+    monkeypatch.setattr(
+        "app.infrastructure.cloud_providers.gcp_provider.time.sleep",
+        lambda *args, **kwargs: None
+    )
+
+    commands = []
+
+    def fake_switch(command, *args, **kwargs):
+        commands.append(command)
+        return SimpleNamespace(stdout="Traffic switch command executed")
+
+    monkeypatch.setattr(
+        "app.infrastructure.cloud_providers.gcp_provider.subprocess.run",
+        fake_switch
+    )
+
+    result = provider.switch_traffic(node)
+
+    assert result["success"] is False
+    assert "route verification failed" in result["message"]
+    assert result["rollback_success"] is True
+    assert len(commands) == 2
+    assert commands[0][-1] == "backup"
+    assert commands[1][-1] == "primary"
+
+
+def test_gcp_switch_rejects_unexpected_aws_backend(monkeypatch):
     provider = ProviderFactory.get_provider("GCP")
     node = SimpleNamespace(
         id=1,
@@ -173,8 +226,8 @@ def test_gcp_switch_rejects_non_200_aws_route(monkeypatch):
     monkeypatch.setattr(
         "app.infrastructure.cloud_providers.gcp_provider.requests.get",
         lambda *args, **kwargs: SimpleNamespace(
-            status_code=503,
-            headers={"X-Active-Backend": "3.110.224.29:5001"}
+            status_code=200,
+            headers={"X-Active-Backend": "unexpected-backend:5001"}
         )
     )
 
