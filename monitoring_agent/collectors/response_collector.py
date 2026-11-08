@@ -2,21 +2,26 @@ import time
 import requests
 
 
-def get_response_time(url):
+FAILURE_RESPONSE_TIME = 2001
 
-    start = time.time()
+
+def get_response_time(url):
+    start = time.monotonic()
 
     try:
+        response = requests.get(url, timeout=5)
 
-        requests.get(url)
+        if response.status_code != 200:
+            return FAILURE_RESPONSE_TIME
 
-        end = time.time()
+        try:
+            if response.json().get("status") != "healthy":
+                return FAILURE_RESPONSE_TIME
+        except (ValueError, AttributeError):
+            return FAILURE_RESPONSE_TIME
 
-        return round(
-            (end-start)*1000,
-            2
-        )
+        elapsed = (time.monotonic() - start) * 1000
+        return round(elapsed, 2)
 
-    except:
-
-        return -1
+    except requests.RequestException:
+        return FAILURE_RESPONSE_TIME

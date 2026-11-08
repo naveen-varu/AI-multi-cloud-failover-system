@@ -17,7 +17,7 @@ def collect_metrics():
         "cpu_usage": get_cpu_usage(),
         "memory_usage": get_memory_usage(),
         "disk_usage": get_disk_usage(),
-        "response_time": get_response_time("http://127.0.0.1:5000")
+        "response_time": get_response_time("http://127.0.0.1:5001/health")
     }
 
 

@@ -9,7 +9,7 @@ from app.infrastructure.cloud_providers.aws_client import AWSClient
 class AWSProvider(ICloudProvider):
 
     PRIMARY_INSTANCE_ID = "i-01a4f91dd0308e2c6"
-    APPLICATION_URL = "http://3.110.224.29/"
+    APPLICATION_URL = "http://3.110.224.29:5001/health"
     SWITCH_SCRIPT = "/usr/local/sbin/set-failover-backend"
 
     def __init__(self, region=None):
@@ -58,7 +58,7 @@ class AWSProvider(ICloudProvider):
 
                 endpoint_healthy = (
                     app_response.status_code == 200
-                    and app_response.json().get("status") == "running"
+                    and app_response.json().get("status") == "healthy"
                 )
 
             except Exception:
@@ -106,7 +106,7 @@ class AWSProvider(ICloudProvider):
             }
 
         proxy_url = "http://127.0.0.1/"
-        expected_backend = "3.110.224.29:80"
+        expected_backend = "3.110.224.29:5001"
 
         try:
             result = subprocess.run(

@@ -11,7 +11,7 @@ from app.domain.interfaces.i_cloud_provider import ICloudProvider
 
 class GCPProvider(ICloudProvider):
 
-    APPLICATION_URL = "http://127.0.0.1:5000/"
+    APPLICATION_URL = "http://127.0.0.1:5001/health"
 
     def __init__(self, project_id=None, zone=None):
         self.project_id = project_id or os.getenv(
@@ -53,7 +53,7 @@ class GCPProvider(ICloudProvider):
 
                 endpoint_healthy = (
                     response.status_code == 200
-                    and response.json().get("status") == "running"
+                    and response.json().get("status") == "healthy"
                 )
 
             except Exception:
@@ -126,8 +126,8 @@ class GCPProvider(ICloudProvider):
                 "message": "Invalid GCP backup node"
             }
 
-        aws_backend = "3.110.224.29:80"
-        gcp_backend = "127.0.0.1:5000"
+        aws_backend = "3.110.224.29:5001"
+        gcp_backend = "127.0.0.1:5001"
         proxy_url = "http://127.0.0.1/"
 
         # Confirm AWS is active before attempting failover.

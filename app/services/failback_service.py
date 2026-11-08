@@ -12,8 +12,8 @@ from app.services.notification_service import send_telegram_notification
 
 class FailbackService:
 
-    AWS_BACKEND = "3.110.224.29:80"
-    GCP_BACKEND = "127.0.0.1:5000"
+    AWS_BACKEND = "3.110.224.29:5001"
+    GCP_BACKEND = "127.0.0.1:5001"
     PROXY_URL = "http://127.0.0.1/"
     SWITCH_SCRIPT = "/usr/local/sbin/set-failover-backend"
 

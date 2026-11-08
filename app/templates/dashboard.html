@@ -50,32 +50,62 @@
 
         </section>
 
-        <section class="metrics-grid">
+        <section class="cloud-metrics-section">
+            <h2>Live Cloud Metrics</h2>
 
-            <div class="card metric-card">
-                <h3>CPU Usage</h3>
-                <strong id="cpu">--</strong>
-                <span>%</span>
+            <div class="cloud-metrics-grid">
+                <div class="card">
+                    <h2>AWS Primary Metrics</h2>
+                    <p class="provider">Latest monitoring agent data</p>
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <h3>CPU</h3>
+                            <strong id="aws-cpu">--</strong><span>%</span>
+                        </div>
+                        <div class="metric-card">
+                            <h3>Memory</h3>
+                            <strong id="aws-memory">--</strong><span>%</span>
+                        </div>
+                        <div class="metric-card">
+                            <h3>Disk</h3>
+                            <strong id="aws-disk">--</strong><span>%</span>
+                        </div>
+                        <div class="metric-card">
+                            <h3>Response</h3>
+                            <strong id="aws-response">--</strong><span>ms</span>
+                        </div>
+                    </div>
+                    <p class="metric-updated" id="aws-metric-time">
+                        Waiting for AWS metrics...
+                    </p>
+                </div>
+
+                <div class="card">
+                    <h2>GCP Backup Metrics</h2>
+                    <p class="provider">Latest monitoring agent data</p>
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <h3>CPU</h3>
+                            <strong id="gcp-cpu">--</strong><span>%</span>
+                        </div>
+                        <div class="metric-card">
+                            <h3>Memory</h3>
+                            <strong id="gcp-memory">--</strong><span>%</span>
+                        </div>
+                        <div class="metric-card">
+                            <h3>Disk</h3>
+                            <strong id="gcp-disk">--</strong><span>%</span>
+                        </div>
+                        <div class="metric-card">
+                            <h3>Response</h3>
+                            <strong id="gcp-response">--</strong><span>ms</span>
+                        </div>
+                    </div>
+                    <p class="metric-updated" id="gcp-metric-time">
+                        Waiting for GCP metrics...
+                    </p>
+                </div>
             </div>
-
-            <div class="card metric-card">
-                <h3>Memory Usage</h3>
-                <strong id="memory">--</strong>
-                <span>%</span>
-            </div>
-
-            <div class="card metric-card">
-                <h3>Disk Usage</h3>
-                <strong id="disk">--</strong>
-                <span>%</span>
-            </div>
-
-            <div class="card metric-card">
-                <h3>Response Time</h3>
-                <strong id="response">--</strong>
-                <span>ms</span>
-            </div>
-
         </section>
 
         <section class="card failover-card">
@@ -94,8 +124,9 @@
                     <span>Backup</span>
                     <strong>GCP Backup</strong>
                 </div>
-            </div
-<div class="simulation-controls">
+            </div>
+
+            <div class="simulation-controls">
     <button id="simulate-failure-btn" type="button">
         Simulate AWS Failure
     </button>
@@ -107,7 +138,7 @@
 
 <p id="simulation-status" role="status">
     Simulation inactive
-</p>>
+</p>
 
             <p class="failover-message" id="failover-decision">
     Checking failover decision...

@@ -27,6 +27,9 @@ def authorize_metrics_request():
 @metrics_bp.route("/metrics", methods=["POST"])
 def create_metric():
 
+    if not authorize_metrics_request():
+        return jsonify({"message": "Unauthorized"}), 401
+
     data = request.get_json(silent=True)
 
     if not isinstance(data, dict):

@@ -65,37 +65,41 @@ async function loadMetrics() {
 
         const metrics = await response.json();
 
-        if (!metrics.length) return;
+        if (!Array.isArray(metrics) || !metrics.length) return;
 
-        const backendResponse = await fetch("/", { method: "HEAD" });
-        const activeBackend = backendResponse.headers.get("X-Active-Backend");
+        // API returns metrics in ascending timestamp order.
+        // Therefore, the last record for each node is its latest metric.
+        const latestForNode = (nodeId) => {
+            const nodeMetrics = metrics.filter(
+                metric => Number(metric.node_id) === nodeId
+            );
 
-        let activeNodeId = null;
+            return nodeMetrics.length
+                ? nodeMetrics[nodeMetrics.length - 1]
+                : null;
+        };
 
-        if (activeBackend === "3.110.224.29:80") {
-            activeNodeId = 2;
-        } else if (activeBackend === "127.0.0.1:5000") {
-            activeNodeId = 1;
+        const awsLatest = latestForNode(2);
+        const gcpLatest = latestForNode(1);
+
+        function updateCloudMetrics(prefix, latest) {
+            if (!latest) return;
+
+            document.getElementById(`${prefix}-cpu`).textContent =
+                latest.cpu;
+            document.getElementById(`${prefix}-memory`).textContent =
+                latest.memory;
+            document.getElementById(`${prefix}-disk`).textContent =
+                latest.disk;
+            document.getElementById(`${prefix}-response`).textContent =
+                latest.response_time;
+
+            document.getElementById(`${prefix}-metric-time`).textContent =
+                "Latest metric received successfully";
         }
 
-        if (activeNodeId === null) {
-            console.error("Unable to identify active backend:", activeBackend);
-            return;
-        }
-
-        const activeMetrics = metrics.filter(
-            metric => metric.node_id === activeNodeId
-        );
-
-        if (!activeMetrics.length) return;
-
-        const latest = activeMetrics[activeMetrics.length - 1];
-
-        document.getElementById("cpu").textContent = latest.cpu;
-        document.getElementById("memory").textContent = latest.memory;
-        document.getElementById("disk").textContent = latest.disk;
-        document.getElementById("response").textContent =
-            latest.response_time;
+        updateCloudMetrics("aws", awsLatest);
+        updateCloudMetrics("gcp", gcpLatest);
 
     } catch (error) {
         console.error("Metrics loading failed:", error);

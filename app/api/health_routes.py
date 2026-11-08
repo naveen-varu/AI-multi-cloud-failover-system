@@ -63,6 +63,19 @@ def check_node_health(node_id):
         .first()
     )
 
+    # Preserve infrastructure health separately from resource health.
+    infrastructure_status = status
+    resource_status = str(node.status or "UNKNOWN").upper()
+
+    # Combine both statuses without hiding infrastructure failures.
+    if infrastructure_status in ("ACTIVE", "WARNING"):
+        if resource_status == "FAILED":
+            status = "FAILED"
+        elif infrastructure_status == "WARNING" or resource_status == "WARNING":
+            status = "WARNING"
+        else:
+            status = "ACTIVE"
+
     ai_prediction = None
 
     if metric is not None:
@@ -79,6 +92,8 @@ def check_node_health(node_id):
         "region": node.region,
         "instance_id": node.instance_id,
         "status": status,
+        "infrastructure_status": infrastructure_status,
+        "resource_status": resource_status,
         "cloud_health": cloud_health,
         "ai_prediction": ai_prediction,
         "metrics_available": metric is not None

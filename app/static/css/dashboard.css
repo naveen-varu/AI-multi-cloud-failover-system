@@ -92,6 +92,12 @@ body {
     color: #4ade80;
 }
 
+.status.warning {
+    background: #78350f;
+    color: #fcd34d;
+    border: 1px solid #f59e0b;
+}
+
 .status.failed {
     background: #7f1d1d;
     color: #fca5a5;
@@ -238,4 +244,56 @@ body {
     background: #14532d;
     color: #4ade80;
     font-weight: bold;
+}
+
+/* Centralized AWS and GCP live metrics */
+.cloud-metrics-section {
+    margin-top: 28px;
+}
+
+.cloud-metrics-section > h2 {
+    margin-bottom: 16px;
+}
+
+.cloud-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+}
+
+.cloud-metrics-grid .metrics-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    margin-top: 12px;
+}
+
+.cloud-metrics-grid .metric-card {
+    padding: 16px;
+    background: #0f172a;
+    border-radius: 10px;
+}
+
+.cloud-metrics-grid .metric-card h3 {
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+.cloud-metrics-grid .metric-card strong {
+    font-size: 26px;
+}
+
+.metric-updated {
+    margin-top: 14px;
+    color: #94a3b8;
+    font-size: 13px;
+}
+
+@media (max-width: 800px) {
+    .cloud-metrics-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .cloud-metrics-grid .metrics-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 }

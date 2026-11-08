@@ -64,7 +64,7 @@ def test_gcp_health(monkeypatch):
         "app.infrastructure.cloud_providers.gcp_provider.requests.get",
         lambda *args, **kwargs: SimpleNamespace(
             status_code=200,
-            json=lambda: {"status": "running"}
+            json=lambda: {"status": "healthy"}
         )
     )
 
@@ -72,6 +72,7 @@ def test_gcp_health(monkeypatch):
 
     assert result["status"] == "RUNNING"
     assert result["endpoint_healthy"] is True
+
 
 def test_aws_switch_traffic_successfully_verifies_route(monkeypatch):
     provider = ProviderFactory.get_provider("AWS")
@@ -89,14 +90,14 @@ def test_aws_switch_traffic_successfully_verifies_route(monkeypatch):
         "app.infrastructure.cloud_providers.aws_provider.requests.get",
         lambda *args, **kwargs: SimpleNamespace(
             status_code=200,
-            headers={"X-Active-Backend": "3.110.224.29:80"}
+            headers={"X-Active-Backend": "3.110.224.29:5001"}
         )
     )
 
     result = provider.switch_traffic(node)
 
     assert result["success"] is True
-    assert result["active_backend"] == "3.110.224.29:80"
+    assert result["active_backend"] == "3.110.224.29:5001"
 
 
 def test_aws_switch_traffic_fails_when_route_verification_fails(monkeypatch):
@@ -115,7 +116,7 @@ def test_aws_switch_traffic_fails_when_route_verification_fails(monkeypatch):
         "app.infrastructure.cloud_providers.aws_provider.requests.get",
         lambda *args, **kwargs: SimpleNamespace(
             status_code=200,
-            headers={"X-Active-Backend": "127.0.0.1:5000"}
+            headers={"X-Active-Backend": "127.0.0.1:5001"}
         )
     )
 
@@ -123,4 +124,73 @@ def test_aws_switch_traffic_fails_when_route_verification_fails(monkeypatch):
 
     assert result["success"] is False
     assert "route verification failed" in result["message"]
-    assert result["active_backend"] == "127.0.0.1:5000"
+    assert result["active_backend"] == "127.0.0.1:5001"
+
+
+def test_gcp_switch_traffic_successfully_verifies_route(monkeypatch):
+    provider = ProviderFactory.get_provider("GCP")
+    node = SimpleNamespace(
+        id=1,
+        provider="GCP",
+        instance_id="gcp-backup-node"
+    )
+
+    responses = iter([
+        SimpleNamespace(
+            status_code=200,
+            headers={"X-Active-Backend": "3.110.224.29:5001"}
+        ),
+        SimpleNamespace(
+            status_code=200,
+            headers={"X-Active-Backend": "127.0.0.1:5001"}
+        )
+    ])
+
+    monkeypatch.setattr(
+        "app.infrastructure.cloud_providers.gcp_provider.requests.get",
+        lambda *args, **kwargs: next(responses)
+    )
+
+    monkeypatch.setattr(
+        "app.infrastructure.cloud_providers.gcp_provider.subprocess.run",
+        lambda *args, **kwargs: SimpleNamespace(stdout="Traffic switched")
+    )
+
+    result = provider.switch_traffic(node)
+
+    assert result["success"] is True
+    assert result["active_backend"] == "127.0.0.1:5001"
+
+
+def test_gcp_switch_rejects_non_200_aws_route(monkeypatch):
+    provider = ProviderFactory.get_provider("GCP")
+    node = SimpleNamespace(
+        id=1,
+        provider="GCP",
+        instance_id="gcp-backup-node"
+    )
+
+    monkeypatch.setattr(
+        "app.infrastructure.cloud_providers.gcp_provider.requests.get",
+        lambda *args, **kwargs: SimpleNamespace(
+            status_code=503,
+            headers={"X-Active-Backend": "3.110.224.29:5001"}
+        )
+    )
+
+    switch_called = {"value": False}
+
+    def fake_switch(*args, **kwargs):
+        switch_called["value"] = True
+        return SimpleNamespace(stdout="Unexpected switch")
+
+    monkeypatch.setattr(
+        "app.infrastructure.cloud_providers.gcp_provider.subprocess.run",
+        fake_switch
+    )
+
+    result = provider.switch_traffic(node)
+
+    assert result["success"] is False
+    assert "AWS primary route could not be verified" in result["message"]
+    assert switch_called["value"] is False
