@@ -128,20 +128,48 @@ async function loadFailoverEvents() {
             const eventCard = document.createElement("div");
             eventCard.className = "event";
 
+            const header = document.createElement("div");
+            header.className = "event-header";
+
             const heading = document.createElement("strong");
-            heading.textContent = event.event_type;
+            heading.textContent =
+                `EVENT #${event.id} — ${event.event_type}`;
 
             const status = document.createElement("span");
             status.textContent = event.new_status;
+
+            header.append(heading, status);
+
+            const cloudInfo = document.createElement("div");
+            cloudInfo.className = "event-cloud-info";
+            cloudInfo.textContent =
+                `${event.cloud_provider || "UNKNOWN"} | ` +
+                `${event.node_name || "Unknown Node"} | ` +
+                `${event.node_role || "UNKNOWN"}`;
 
             const reason = document.createElement("p");
             reason.textContent = event.reason;
 
             const transition = document.createElement("small");
             transition.textContent =
-                `${event.previous_status} → ${event.new_status}`;
+                `${event.previous_status || "N/A"} → ${event.new_status}`;
 
-            eventCard.append(heading, status, reason, transition);
+            const timestamp = document.createElement("small");
+            const eventDate = new Date(event.created_at);
+
+            timestamp.textContent = Number.isNaN(eventDate.getTime())
+                ? event.created_at
+                : eventDate.toLocaleString();
+
+            eventCard.append(
+                header,
+                cloudInfo,
+                reason,
+                transition,
+                document.createElement("br"),
+                timestamp
+            );
+
             container.appendChild(eventCard);
         });
 

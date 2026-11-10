@@ -18,6 +18,24 @@ class FailbackService:
     SWITCH_SCRIPT = "/usr/local/sbin/set-failover-backend"
 
     @staticmethod
+    def get_active_backend():
+        """Read the active route once without retrying."""
+        try:
+            response = requests.get(
+                FailbackService.PROXY_URL,
+                timeout=2,
+                headers={"Connection": "close"}
+            )
+
+            if response.status_code != 200:
+                return None
+
+            return response.headers.get("X-Active-Backend")
+
+        except requests.RequestException:
+            return None
+
+    @staticmethod
     def verify_route(expected_backend):
         for attempt in range(10):
             try:
@@ -89,7 +107,27 @@ class FailbackService:
                 "message": "AWS primary instance ID does not match configuration"
             }
 
-        # Safety check: GCP must currently be serving traffic.
+        # Avoid unnecessary failback when AWS already serves traffic.
+        active_backend = FailbackService.get_active_backend()
+
+        if active_backend == FailbackService.AWS_BACKEND:
+            return {
+                "success": True,
+                "message": "AWS primary is already serving traffic. Failback not required.",
+                "aws_node_id": aws_node.id,
+                "gcp_node_id": gcp_node.id,
+                "active_backend": FailbackService.AWS_BACKEND,
+                "already_active": True
+            }
+
+        # Failback is permitted only when GCP is verified as active.
+        if active_backend != FailbackService.GCP_BACKEND:
+            return {
+                "success": False,
+                "message": "Active traffic route could not be verified. Failback cancelled."
+            }
+
+        # Retain the existing independent GCP route verification.
         if not FailbackService.verify_route(
             FailbackService.GCP_BACKEND
         ):

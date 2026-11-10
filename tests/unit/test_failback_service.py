@@ -59,6 +59,12 @@ def test_successful_failback(app, monkeypatch):
 
         monkeypatch.setattr(
             FailbackService,
+            "get_active_backend",
+            staticmethod(lambda: FailbackService.GCP_BACKEND)
+        )
+
+        monkeypatch.setattr(
+            FailbackService,
             "verify_route",
             staticmethod(
                 lambda backend: backend in (
@@ -101,6 +107,12 @@ def test_failback_cancelled_when_aws_unhealthy(app, monkeypatch):
 
         monkeypatch.setattr(
             FailbackService,
+            "get_active_backend",
+            staticmethod(lambda: FailbackService.GCP_BACKEND)
+        )
+
+        monkeypatch.setattr(
+            FailbackService,
             "verify_route",
             staticmethod(lambda backend: backend == FailbackService.GCP_BACKEND)
         )
@@ -133,6 +145,12 @@ def test_failback_cancelled_when_gcp_is_not_active(app, monkeypatch):
 
         monkeypatch.setattr(
             FailbackService,
+            "get_active_backend",
+            staticmethod(lambda: None)
+        )
+
+        monkeypatch.setattr(
+            FailbackService,
             "verify_route",
             staticmethod(lambda backend: False)
         )
@@ -140,7 +158,7 @@ def test_failback_cancelled_when_gcp_is_not_active(app, monkeypatch):
         result = FailbackService.execute_failback()
 
         assert result["success"] is False
-        assert "GCP is not verified" in result["message"]
+        assert "Active traffic route could not be verified" in result["message"]
 def test_failback_attempts_gcp_rollback_when_aws_switch_fails(app, monkeypatch):
     with app.app_context():
         create_nodes()
@@ -159,6 +177,12 @@ def test_failback_attempts_gcp_rollback_when_aws_switch_fails(app, monkeypatch):
                     "success": False,
                     "message": "Simulated AWS switching failure"
                 }
+
+        monkeypatch.setattr(
+            FailbackService,
+            "get_active_backend",
+            staticmethod(lambda: FailbackService.GCP_BACKEND)
+        )
 
         monkeypatch.setattr(
             FailbackService,
@@ -192,3 +216,41 @@ def test_failback_attempts_gcp_rollback_when_aws_switch_fails(app, monkeypatch):
         assert result["success"] is False
         assert result["rollback_success"] is True
         assert rollback_called["value"] is True
+
+
+def test_failback_skipped_when_aws_already_active(app, monkeypatch):
+    with app.app_context():
+        aws_node, gcp_node = create_nodes()
+
+        monkeypatch.setattr(
+            FailbackService,
+            "get_active_backend",
+            staticmethod(lambda: FailbackService.AWS_BACKEND)
+        )
+
+        def unexpected_call(*args, **kwargs):
+            raise AssertionError("Unnecessary failback operation was attempted")
+
+        monkeypatch.setattr(
+            FailbackService,
+            "verify_route",
+            staticmethod(unexpected_call)
+        )
+
+        monkeypatch.setattr(
+            "app.services.failback_service.ProviderFactory.get_provider",
+            unexpected_call
+        )
+
+        result = FailbackService.execute_failback()
+
+        assert result["success"] is True
+        assert result["already_active"] is True
+        assert result["active_backend"] == FailbackService.AWS_BACKEND
+
+        event = FailoverEvent.query.filter_by(
+            node_id=aws_node.id,
+            event_type="AUTOMATIC_FAILBACK"
+        ).first()
+
+        assert event is None
